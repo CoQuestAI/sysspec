@@ -202,6 +202,7 @@ use an explicit connection string — `psql "$DATABASE_URL_DEV"` for dev or
 | `REDIS_URL` | Redis is currently disabled (not configured). When enabled, must be separate. |
 | `WEB_REPL_RENEWAL` | Replit-specific. No isolation concern. |
 | `ENABLE_CLUSTERING` | Configuration flag. No isolation concern. |
+| `GITHUB_TOKEN` | Tooling-only. Used by `sysspec-push.sh` / `sysspec-pull.sh` in the dev shell to sync shared docs to `CoQuestAI/sysspec`. Never referenced by application code; never deployed to prod. Requires `repo` scope on `CoQuestAI/sysspec`. Single token, not split DEV/PROD — no isolation concern. Added March 24, 2026 (Task #142). |
 
 ---
 
