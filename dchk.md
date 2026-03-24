@@ -123,8 +123,9 @@ The agent checks each file below and updates it if warranted. No user prompt req
 | `deliverables.md` | Migration count changed; security task resolved; architectural phase completed |
 | `replit.md` | New modules added; key file locations changed; new dependencies introduced; architectural decisions made |
 | `future.md` | Deferred items identified or discussed during session |
+| `sysspec-push.sh` *(action, not a file update)* | Any of the 6 shared docs (`sysspec.md`, `userpref.md`, `mchk.md`, `pchk.md`, `dchk.md`, `devprodseparation.md`) were edited this session → run `bash sysspec-push.sh` and record the result. Also note in the log entry whether a `sysspec-pull.sh` run is recommended at the start of the **next** session (i.e., if another Repl is likely to have pushed shared docs in the interim). |
 
-If none of the conditions apply, record "No file updates required" in Step 9 of the log entry.
+If none of the conditions apply, record "No file updates required this session. Sysspec push: N/A." in Step 9 of the log entry.
 
 ---
 
@@ -210,6 +211,8 @@ Always run **last** — after Step 10 so the task consolidation result is known.
 **Env var changes:** [None | List new refs and confirmation of devprodseparation.md status]
 
 **File updates this session:** [None | List files updated in Step 9]
+
+**Sysspec sync:** [N/A — no shared docs edited | Pushed: [file list] — commit [SHA] | Pull recommended next session: yes/no]
 
 **Task consolidation:** [None needed | Consolidated ✓ #X, #Y → master #N | Overwrote master #N with MERGED #A, #B | Both: consolidated ✓ #X, #Y and overwrote master #N with MERGED #A, #B]
 
