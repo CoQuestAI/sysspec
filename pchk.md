@@ -1,4 +1,4 @@
-> **This document is the sole source of deployment execution.** It controls all pre-publish steps, prod migration application, and republish sequencing. `sysspec.md` is reference only and does not control execution.
+> **This document is the sole source of deployment execution.** It controls all pre-publish steps, prod migration application, and republish sequencing. `sysspec.md` and `oldsysspec.md` are reference only and do not control execution.
 
 # Pre-Publish Database Checklist
 

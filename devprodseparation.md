@@ -1,5 +1,37 @@
 # Dev / Prod Environment Separation
 
+> **Plat2/GTD instance** — `REPL_ID=574f1a0f-3477-4a17-ac5b-19bb9b70d11e` · dev domain `574f1a0f-3477-4a17-ac5b-19bb9b70d11e-00-19vkcbew7gk9f.worf.replit.dev` · DB: GTD Neon (`DATABASE_URL_DEV` / `DATABASE_URL_PROD`) · Auth: phone email + TOTP only (no Replit OIDC) · Cookies: `gtd.sid` / `gtd.session`. This note added March 26, 2026; will be overwritten by `sysspec-pull` — re-add after each pull.
+
+---
+
+## Current Status Summary
+
+*Last audited: April 2, 2026 — cross-referenced against live server code.*
+
+| Item | Code split | Secrets created | Status |
+|------|-----------|-----------------|--------|
+| Object Storage (3 secrets) | ✅ | ✅ | Done |
+| `SESSION_SECRET` | ✅ | ❓ unconfirmed | Needs Replit creation |
+| `OAUTH_RSA_PRIVATE_KEY` / `PUBLIC_KEY` | ✅ | ❓ | **Not referenced in GTD codebase** — document stale; likely irrelevant |
+| `ENCRYPTION_KEY_V1` / `V2` | ✅ | ❓ | **Not referenced in GTD codebase** — GTD uses `CONTENT_MASTER_SECRET` (HKDF); document stale |
+| `AI_INTEGRATIONS_GEMINI_API_KEY` / `BASE_URL` | ✅ | ❌ missing | **🔴 Active prod defect** — AI broken in prod today |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | ✅ | ❌ missing | 🟡 Pre-go-live risk |
+| `APP_URL` / `ISSUER_URL` / `SEARCH_SALT` / `CRON_API_KEY` | ✅ | ❌ missing | 🟡 Operational hygiene |
+| `CONTENT_MASTER_SECRET` | ❌ no split | ❌ missing | **Not in document at all** — GTD content encryption root key |
+| `PHONE_ENCRYPTION_KEY` | ❌ no split | ❌ missing | **Not in document at all** — phone field encryption |
+| `PHONE_HMAC_SECRET` | ❌ no split | ❌ missing | **Not in document at all** — phone HMAC lookup |
+| `VITE_STRIPE_PUBLIC_KEY` | ❌ deferred | ❌ deferred | Go-live task — requires server-injection approach |
+| `pchk.md` Step 0 checks | — | — | Blocked until all secrets created |
+| Resend / Twilio credentials | — | — | Unresolved — isolation not confirmed |
+
+### Key findings from April 2, 2026 code audit
+
+- `ENCRYPTION_KEY_V1/V2` and `OAUTH_RSA_*` are **not referenced** in any GTD server file. These were Plat1/OrgPro fields stripped at the March 26 fork. Their `_DEV`/`_PROD` split entries in this document can be deprioritised.
+- Three GTD-specific secrets (`CONTENT_MASTER_SECRET`, `PHONE_ENCRYPTION_KEY`, `PHONE_HMAC_SECRET`) were added after the fork and are **not covered anywhere in this document**. They share the same shared-secret risk as everything else here.
+- All other code-side splits are implemented. The remaining work is entirely in Replit Secrets pane (user action) and adding Step 0 to `pchk.md`.
+
+---
+
 ## Overview
 
 This document records the full audit of shared state between the development and
@@ -17,9 +49,9 @@ no env vars — only secrets.
 |------|-----------|------------|--------|
 | PostgreSQL databases | `DATABASE_URL_DEV` → app_write/heliumdb (Replit built-in) | `DATABASE_URL_PROD` → app_write/Neon prod | ✅ Confirmed separated — `server/db.ts` reads `DATABASE_URL_DEV ?? DATABASE_URL` in dev, `DATABASE_URL_PROD ?? DATABASE_URL` in prod |
 | `NODE_ENV` | Not set in shell; start script injects `development` into the node process | `production` — confirmed in deployment logs: `NODE_ENV=production node dist/index.js` | ✅ Confirmed different |
-| `REPL_ID` | `9d5c547d-c680-43a4-a01c-fb2c4e78c89d` | Not logged in prod — almost certainly **the same** | ⚠️ Likely SHARED — identifies the Repl workspace, not the environment. Do not use this to distinguish dev from prod. |
-| `REPLIT_DOMAINS` | `9d5c547d-...picard.replit.dev` (dev tunnel) | Not logged in prod — expected to be the `.replit.app` domain | ⚠️ Likely different but **unverified** |
-| `REPLIT_DEV_DOMAIN` | `9d5c547d-...picard.replit.dev` (same as above) | Not logged in prod — likely absent or a different value | ⚠️ Likely different/absent in prod but **unverified** |
+| `REPL_ID` | `574f1a0f-3477-4a17-ac5b-19bb9b70d11e` (Plat2/GTD) | Not logged in prod — almost certainly **the same** | ⚠️ Likely SHARED — identifies the Repl workspace, not the environment. Do not use this to distinguish dev from prod. |
+| `REPLIT_DOMAINS` | `574f1a0f-...-19vkcbew7gk9f.worf.replit.dev` (dev tunnel) | Not logged in prod — expected to be the `.replit.app` domain | ⚠️ Likely different but **unverified** |
+| `REPLIT_DEV_DOMAIN` | `574f1a0f-...-19vkcbew7gk9f.worf.replit.dev` (same as above) | Not logged in prod — likely absent or a different value | ⚠️ Likely different/absent in prod but **unverified** |
 
 > **Note:** To confirm `REPLIT_DOMAINS`, `REPLIT_DEV_DOMAIN`, and `REPL_ID` in
 > production, the app would need to log these values at startup. Currently it

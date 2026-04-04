@@ -3,6 +3,14 @@ Preferences and working style for all AI sessions on this project.
 
 ---
 
+## Project Context
+
+**This is a mobile-first Expo React Native application.** All UI, navigation, and screen behavior work lives in `apps/mobile/`. The Express backend (`server/`) and web admin frontend (`client/src/`) are supporting infrastructure only.
+
+**Diagnosis rule:** When investigating any UI or navigation issue, default to mobile-first assumptions. Server logs and browser console errors are backend-only signals — they do not reflect mobile UI behavior. Never diagnose a mobile UI bug using server or browser console output.
+
+---
+
 ## Communication Style
 - Use simple, everyday language. Match the user's language (English or French).
 - User is an App Architect and BA. Technical jargon is fine.
@@ -25,7 +33,7 @@ Mobile app — **offline-first, Capacitor iOS/Android WebView**.
 - All navigation is internal. No external links.
 - No network-dependent routing.
 - All assets stored within the app.
-- See `sysspec.md` for mandatory UI rules that follow from this.
+- See `sysspec.md` for the GTD mobile UI rules and `oldsysspec.md` for legacy platform UI rules.
 
 ## Database Operations
 ALL production database operations use direct `psql` commands via bash:
@@ -36,7 +44,7 @@ This applies to: pre-publish checklist, schema checks, production syncs, and all
 
 For dev-only operations, any tool (built-in SQL tool, psql, etc.) is fine.
 
-See `sysspec.md` for the PG\* environment variable danger rules — mandatory reading.
+See `oldsysspec.md` for the PG\* environment variable danger rules — mandatory reading.
 
 ## Plan Execution
 When the user approves a proposed session plan, execute it exactly as described in the proposal — no silent deviations. If what was proposed and what gets coded differ, that is a violation of the approved plan. Re-proposing a modified plan is encouraged when scope changes; any new proposal requires fresh user approval before execution. 

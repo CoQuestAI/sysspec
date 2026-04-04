@@ -123,7 +123,7 @@ The agent checks each file below and updates it if warranted. No user prompt req
 | `deliverables.md` | Migration count changed; security task resolved; architectural phase completed |
 | `replit.md` | New modules added; key file locations changed; new dependencies introduced; architectural decisions made |
 | `future.md` | Deferred items identified or discussed during session |
-| `sysspec-push.sh` *(action, not a file update)* | Any of the 6 shared docs (`sysspec.md`, `userpref.md`, `mchk.md`, `pchk.md`, `dchk.md`, `devprodseparation.md`) were edited this session → run `bash sysspec-push.sh` and record the result. Also note in the log entry whether a `sysspec-pull.sh` run is recommended at the start of the **next** session (i.e., if another Repl is likely to have pushed shared docs in the interim). |
+| `sysspec-push.sh` *(action, not a file update)* | Any of the 6 shared docs (`oldsysspec.md`, `userpref.md`, `mchk.md`, `pchk.md`, `dchk.md`, `devprodseparation.md`) were edited this session → run `bash sysspec-push.sh` and record the result. Also note in the log entry whether a `sysspec-pull.sh` run is recommended at the start of the **next** session (i.e., if another Repl is likely to have pushed shared docs in the interim). Note: `sysspec.md` (the GTD Mobile System Spec) is local-only and is NOT synced to GitHub. |
 
 If none of the conditions apply, record "No file updates required this session. Sysspec push: N/A." in Step 9 of the log entry.
 
