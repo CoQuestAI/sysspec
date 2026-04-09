@@ -23,14 +23,37 @@ The five PG\* environment variables (`PGDATABASE`, `PGHOST`, `PGPORT`, `PGUSER`,
 In the dev shell, `DATABASE_URL_DEV` = `helium/heliumdb` (Replit built-in / app_write) but PG\* = Neon prod credentials. **A bare `psql` command with no connection string in the dev shell connects directly to live Neon prod data** — because `psql` uses PG\* vars by default when no connection string is given.
 
 **Rule — no exceptions:** Every `psql` command in every session must use an explicit connection string:
-- Dev: `psql "$DATABASE_URL_DEV" ...`
+- Dev: `psql "$DATABASE_URL_DEV" ...` *(see Plat2/GTD override below)*
 - Prod: `psql "$DATABASE_URL_PROD" ...`
 
 Never rely on PG\* vars. Never run bare `psql` without a connection string.
 
 ---
 
-Before every publish, run the checklist below comparing dev (`$DATABASE_URL_DEV`) vs prod (`$DATABASE_URL_PROD`) using `psql` commands only. DO NOT USE DRIZZLE AT ALL (no db:push, no drizzle-kit commands of any kind). DO NOT USE THE BUILT-IN SQL TOOL AT ALL. All database comparison steps use `diff` to compare sorted output from both databases.
+## CRITICAL: DATABASE_URL_DEV Does Not Exist in Plat2/GTD — Use DATABASE_URL Instead
+
+> **[Plat2/GTD override — supersedes the DATABASE_URL_DEV references above and throughout this document. Confirmed April 9, 2026.]**
+>
+> The secret `DATABASE_URL_DEV` was **never created** in this Repl. Every reference to
+> `$DATABASE_URL_DEV` in this document must be read as **`$DATABASE_URL`** — the
+> Replit-auto-provided owner connection to heliumdb (the Replit built-in dev database).
+>
+> **Why this matters:** If you run `psql "$DATABASE_URL_DEV"` and the secret does not
+> exist, the shell expands it to an empty string. psql then silently falls back to the
+> PG\* environment variables and connects to ep-twilight-feather — an old Neon database
+> unrelated to active dev or prod — producing wrong diff output with no error message.
+>
+> **Correct connection strings for Plat2/GTD:**
+> - Dev: `psql "$DATABASE_URL" ...` (heliumdb, Replit built-in, 36 migration rows)
+> - Prod: `psql "$DATABASE_URL_PROD" ...` (Neon ep-steep-hat, GTD production)
+>
+> The original `DATABASE_URL_DEV` text is preserved throughout this document for
+> shared-doc compatibility. Treat every occurrence as `DATABASE_URL` when working
+> in this Repl.
+
+---
+
+Before every publish, run the checklist below comparing dev (`$DATABASE_URL_DEV` → use `$DATABASE_URL` in this Repl) vs prod (`$DATABASE_URL_PROD`) using `psql` commands only. DO NOT USE DRIZZLE AT ALL (no db:push, no drizzle-kit commands of any kind). DO NOT USE THE BUILT-IN SQL TOOL AT ALL. All database comparison steps use `diff` to compare sorted output from both databases.
 
 Dev is always ahead of Prod.
 
@@ -41,7 +64,7 @@ Dev is always ahead of Prod.
 Before running any schema comparison steps, confirm both database connections are live and pointing to the correct databases.
 
 ```bash
-psql "$DATABASE_URL_DEV" -c "\conninfo"
+psql "$DATABASE_URL_DEV" -c "\conninfo"  # ($DATABASE_URL_DEV → use $DATABASE_URL in this Repl)
 ```
 Expected output: contains `heliumdb` or `helium` and user `app_write` — confirms dev connection is Replit built-in PostgreSQL.
 
@@ -71,7 +94,7 @@ grep -rh "ADD COLUMN" migrations/*.sql \
 For each column identified, confirm it exists:
 
 ```bash
-psql "$DATABASE_URL_DEV" -t -c "
+psql "$DATABASE_URL_DEV" -t -c "  # ($DATABASE_URL_DEV → use $DATABASE_URL in this Repl)
   SELECT table_name, column_name
   FROM information_schema.columns
   WHERE table_schema='public'
@@ -96,6 +119,7 @@ Cross-reference the output against the migration files. Any `ADD COLUMN` claim w
 
 1. **Views**: Compare viewnames from `pg_views` where `schemaname='public'`. Use viewname only — do not compare `view_definition` (returns NULL for non-owners; also differs by PG version between dev and prod).
    ```bash
+   # ($DATABASE_URL_DEV → use $DATABASE_URL in this Repl)
    diff \
      <(psql "$DATABASE_URL_DEV" -t -c "SELECT viewname FROM pg_views WHERE schemaname='public' ORDER BY 1;") \
      <(psql "$DATABASE_URL_PROD" -t -c "SELECT viewname FROM pg_views WHERE schemaname='public' ORDER BY 1;")
@@ -111,6 +135,7 @@ Cross-reference the output against the migration files. Any `ADD COLUMN` claim w
 
    **Step 9a — Policy name diff (dev vs prod):**
    ```bash
+   # ($DATABASE_URL_DEV → use $DATABASE_URL in this Repl)
    diff \
      <(psql "$DATABASE_URL_DEV" -t -c "SELECT tablename||'.'||policyname FROM pg_policies ORDER BY 1;") \
      <(psql "$DATABASE_URL_PROD" -t -c "SELECT tablename||'.'||policyname FROM pg_policies ORDER BY 1;")
@@ -119,6 +144,7 @@ Cross-reference the output against the migration files. Any `ADD COLUMN` claim w
 
    **Step 9b — RLS-enabled tables:**
    ```bash
+   # ($DATABASE_URL_DEV → use $DATABASE_URL in this Repl)
    diff \
      <(psql "$DATABASE_URL_DEV" -t -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND rowsecurity=true ORDER BY tablename;") \
      <(psql "$DATABASE_URL_PROD" -t -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND rowsecurity=true ORDER BY tablename;")
@@ -145,7 +171,7 @@ Cross-reference the output against the migration files. Any `ADD COLUMN` claim w
      this appears, it means both databases somehow lost all policies. Re-apply
      migration 0004 to both databases via psql:
      ```bash
-     psql "$DATABASE_URL_DEV" -f migrations/0004_rls_public_roles.sql
+     psql "$DATABASE_URL_DEV" -f migrations/0004_rls_public_roles.sql  # ($DATABASE_URL_DEV → use $DATABASE_URL in this Repl)
      psql "$DATABASE_URL_PROD" -f migrations/0004_rls_public_roles.sql
      ```
 
@@ -179,6 +205,7 @@ Cross-reference the output against the migration files. Any `ADD COLUMN` claim w
     Expected output: empty (no rows). If any `_key` constraints appear, rename them before proceeding.
 12. **RLS Roles**: Confirm the three required Row Level Security roles exist in both databases:
     ```bash
+    # ($DATABASE_URL_DEV → use $DATABASE_URL in this Repl)
     diff \
       <(psql "$DATABASE_URL_DEV" -t -c "SELECT rolname FROM pg_roles WHERE rolname IN ('app_admin','app_readonly','app_write') ORDER BY rolname;") \
       <(psql "$DATABASE_URL_PROD" -t -c "SELECT rolname FROM pg_roles WHERE rolname IN ('app_admin','app_readonly','app_write') ORDER BY rolname;")

@@ -1,6 +1,8 @@
 # Dev / Prod Environment Separation
 
 > **Plat2/GTD instance** — `REPL_ID=574f1a0f-3477-4a17-ac5b-19bb9b70d11e` · dev domain `574f1a0f-3477-4a17-ac5b-19bb9b70d11e-00-19vkcbew7gk9f.worf.replit.dev` · DB: GTD Neon (`DATABASE_URL_DEV` / `DATABASE_URL_PROD`) · Auth: phone email + TOTP only (no Replit OIDC) · Cookies: `gtd.sid` / `gtd.session`. This note added March 26, 2026; will be overwritten by `sysspec-pull` — re-add after each pull.
+>
+> **[SUPERSEDED — Plat2/GTD, April 9, 2026]** The `DATABASE_URL_DEV` secret referenced above was never created in this Repl. For pchk and all psql dev operations, use `$DATABASE_URL` (Replit-auto-provided heliumdb owner connection) instead of `$DATABASE_URL_DEV`. See the "What Is Already Correctly Separated" table note below.
 
 ---
 
@@ -47,11 +49,26 @@ no env vars — only secrets.
 
 | Item | Dev value | Prod value | Status |
 |------|-----------|------------|--------|
-| PostgreSQL databases | `DATABASE_URL_DEV` → app_write/heliumdb (Replit built-in) | `DATABASE_URL_PROD` → app_write/Neon prod | ✅ Confirmed separated — `server/db.ts` reads `DATABASE_URL_DEV ?? DATABASE_URL` in dev, `DATABASE_URL_PROD ?? DATABASE_URL` in prod |
+| PostgreSQL databases | `DATABASE_URL_DEV` → app_write/heliumdb (Replit built-in) | `DATABASE_URL_PROD` → app_write/Neon prod | ✅ Confirmed separated — `server/db.ts` reads `DATABASE_URL_DEV ?? DATABASE_URL` in dev, `DATABASE_URL_PROD ?? DATABASE_URL` in prod. **[SUPERSEDED — Plat2/GTD]** Dev secret never created; use `$DATABASE_URL` for psql — see note below. |
 | `NODE_ENV` | Not set in shell; start script injects `development` into the node process | `production` — confirmed in deployment logs: `NODE_ENV=production node dist/index.js` | ✅ Confirmed different |
 | `REPL_ID` | `574f1a0f-3477-4a17-ac5b-19bb9b70d11e` (Plat2/GTD) | Not logged in prod — almost certainly **the same** | ⚠️ Likely SHARED — identifies the Repl workspace, not the environment. Do not use this to distinguish dev from prod. |
 | `REPLIT_DOMAINS` | `574f1a0f-...-19vkcbew7gk9f.worf.replit.dev` (dev tunnel) | Not logged in prod — expected to be the `.replit.app` domain | ⚠️ Likely different but **unverified** |
 | `REPLIT_DEV_DOMAIN` | `574f1a0f-...-19vkcbew7gk9f.worf.replit.dev` (same as above) | Not logged in prod — likely absent or a different value | ⚠️ Likely different/absent in prod but **unverified** |
+
+> **[SUPERSEDED — Plat2/GTD, April 9, 2026] PostgreSQL databases row — dev value:**
+> The `DATABASE_URL_DEV` secret in the table above was **never created** in this Repl.
+> The "dev value" column describes the intended design (a named `DATABASE_URL_DEV` secret
+> pointing to heliumdb). In practice, the Replit-auto-provided `DATABASE_URL` is the
+> heliumdb owner connection used for dev in pchk and all psql commands.
+>
+> Correct variable mapping for Plat2/GTD:
+> - Dev: `$DATABASE_URL` — Replit built-in heliumdb (auto-provided, no secret needed)
+> - Prod: `$DATABASE_URL_PROD` — Neon ep-steep-hat (GTD production, secret confirmed)
+>
+> The `DATABASE_URL_DEV ?? DATABASE_URL` fallback in `server/db.ts` means the app still
+> works correctly at runtime — it falls through to `DATABASE_URL`. The issue is only in
+> pchk/psql commands where an empty `$DATABASE_URL_DEV` causes silent fallback to PG*
+> vars (ep-twilight-feather). Always use `$DATABASE_URL` explicitly for dev psql.
 
 > **Note:** To confirm `REPLIT_DOMAINS`, `REPLIT_DEV_DOMAIN`, and `REPL_ID` in
 > production, the app would need to log these values at startup. Currently it
