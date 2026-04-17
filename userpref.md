@@ -18,12 +18,12 @@ Preferences and working style for all AI sessions on this project.
 - Keep responses measured. Do not over-explain or repeat information unnecessarily.
 
 ## Question Style
-When an agent needs to ask the user multiple questions, they must:
-1. Number every question.
-2. Place each question on its own line as a list item.
-3. Never bundle multiple questions into a single paragraph or sentence.
+Every question posed to the user must be:
+1. Numbered.
+2. On its own line as a list item.
+3. Never bundled with other questions in a paragraph or sentence.
 
-One question per numbered item. No exceptions.
+This applies whether asking one question or many. One question per numbered item, always.
 
 ## Code Change Notifications
 When making any code changes, always state:
