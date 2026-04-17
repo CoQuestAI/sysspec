@@ -48,52 +48,28 @@ git log --oneline <freeze-point-commit>..HEAD -- <overlapping files>
 
 **Step 3 — Verify `scripts/post-merge.sh`**
 Read the file. Every command must pass all of:
-- Contains `npm install` — always valid
+- Contains `pnpm install` — this is a pnpm monorepo; npm is not used
 - Does NOT contain `drizzle-kit` or `npm run db:push` (permanently removed)
 - No command that prompts for input (stdin is closed — all commands must be non-interactive)
 - Script starts with `set -e`
 - Script is idempotent (safe to run multiple times)
 
-Current expected contents (as of March 15, 2026 — includes hash-based migration loop):
+Current expected contents (as of April 10, 2026):
 ```bash
 #!/bin/bash
 set -e
-npm install
 
-if [ -z "$DATABASE_URL" ]; then
-  echo "post-merge: DATABASE_URL not set, skipping migrations"
-  exit 0
-fi
+# Install dependencies using pnpm (this monorepo does not use npm)
+pnpm install --frozen-lockfile
 
-export PGCONNECT_TIMEOUT=10
+echo "post-merge: dependencies installed"
 
-applied=0
-skipped=0
-
-for f in migrations/[0-9]*.sql; do
-  [ -f "$f" ] || continue
-  hash=$(sha256sum "$f" | awk '{print $1}')
-  exists=$(psql "$DATABASE_URL" -tAc \
-    "SELECT 1 FROM drizzle.__drizzle_migrations WHERE hash = '$hash' LIMIT 1;" 2>/dev/null || echo "")
-  if [ "$exists" = "1" ]; then
-    skipped=$((skipped + 1))
-    continue
-  fi
-  echo "post-merge: applying $f"
-  if psql "$DATABASE_URL" --set ON_ERROR_STOP=1 -f "$f" 2>&1; then
-    millis=$(date +%s%3N)
-    psql "$DATABASE_URL" -c \
-      "INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ('$hash', $millis);"
-    echo "post-merge: applied $f"
-    applied=$((applied + 1))
-  else
-    echo "post-merge: WARNING — $f failed (may already be applied). Skipping."
-    skipped=$((skipped + 1))
-  fi
-done
-
-echo "post-merge: migrations done — $applied applied, $skipped skipped"
+# Schema changes are applied MANUALLY via psql only — drizzle-kit is permanently removed.
+# Never use drizzle-kit or db:push. See pchk.md for the approved procedure.
+echo "post-merge: done"
 ```
+
+> **No migration loop — all migrations are manual.** `post-merge.sh` intentionally does NOT auto-apply migration files. Every migration must be applied by hand via `psql "$DATABASE_URL" -f migrations/NNNN_name.sql` after a merge that includes new migration files. **Step 7b is the only DDL enforcement point.** If Step 7b is skipped or incorrectly marked N/A when a migration file was included, DDL changes will silently be absent from dev (as happened with Task #226 and `0040_device_token_auth.sql`). Never assume a migration was applied just because a task agent says so — always verify the column/index/constraint directly in the database.
 
 > **CRITICAL — drizzle-kit is permanently removed from this project.** `drizzle-kit` and `npm run db:push` must never appear anywhere in `post-merge.sh`. If found, FAIL immediately — do not approve the merge until removed. The Replit platform injects a reminder into every agent session (including task agents) saying to use `db:push`. That reminder is wrong for this project and cannot be disabled. A task agent may have obeyed it regardless of what `oldsysspec.md` and `replit.md` say. Steps 3, 4, and 5 together are the enforcement net.
 

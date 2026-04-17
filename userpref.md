@@ -17,6 +17,14 @@ Preferences and working style for all AI sessions on this project.
 - Calm, professional tone. Acknowledge specific points — no blanket praise or flattery.
 - Keep responses measured. Do not over-explain or repeat information unnecessarily.
 
+## Question Style
+When an agent needs to ask the user multiple questions, they must:
+1. Number every question.
+2. Place each question on its own line as a list item.
+3. Never bundle multiple questions into a single paragraph or sentence.
+
+One question per numbered item. No exceptions.
+
 ## Code Change Notifications
 When making any code changes, always state:
 - Which files were updated
@@ -63,6 +71,18 @@ Full audit of all shared secrets between dev and prod is documented in `devprods
 ## File Operations
 - **Searching** (content or filename patterns): always use the search tool (ripgrep); never use bash `grep` or `find`.
 - **All other file operations** (move, copy, rename, delete, run scripts): use bash.
+
+## Core vs Plugin Boundary
+
+**Core files (off-limits for feature additions):**
+- `HomeLayer` — root z-layer container
+- `HomeMenu` — primary menu shell
+- `CarouselRow` — home carousel renderer
+- `_layout` files — Expo Router layout wrappers
+
+**Rule:** Never add a new panel, menu, dialog, child menu, or child dialog by editing a core file. Core files define the structural shell only and must not grow with features.
+
+**Plugin contract:** Every new panel, menu, dialog, child menu, or child dialog must be implemented as a plugin — a self-contained component registered through the plugin system, not wired directly into a core file. This boundary is non-negotiable for all future feature work.
 
 ## Project Task Queries
 When listing tasks for planning, dchk sweeps, or mchk scans, always filter for PROPOSED and IN_PROGRESS only. MERGED tasks accumulate permanently — `updateProjectTask` silently no-ops on MERGED state (platform limitation confirmed March 17, 2026). The MERGED list is silent historical noise and cannot be pruned. Never query MERGED state for actionable task work.
