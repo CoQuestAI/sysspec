@@ -12,7 +12,7 @@ To get the list: open the subtask in the Tasks panel, scroll to its completion s
 
 ---
 
-## STEPS 2–6 — Pre-Merge Checks (I run these, then present matrix)
+## STEPS 2–6b — Pre-Merge Checks (I run these, then present matrix)
 
 Once I receive the file list, I run all checks below and present results as a matrix:
 
@@ -25,6 +25,7 @@ Once I receive the file list, I run all checks below and present results as a ma
 | 4    | New packages             | ✅ PASS |       |
 | 5    | Schema / migrations      | ✅ PASS |       |
 | 6    | New env vars / secrets   | ✅ PASS |       |
+| 6b   | TypeScript type-check    | ✅ PASS |       |
 ```
 
 **Step 2 — File overlap with main**
@@ -93,11 +94,23 @@ Search the task agent's changed files for any new `import.meta.env.*` or `proces
 - PASS: no new vars
 - FAIL: new vars found → add them to Replit Secrets before approving, or the app breaks on first run
 
+**Step 6b — TypeScript type-check**
+Run the type-check validation and confirm it exits cleanly:
+
+```bash
+npx tsc --noEmit --skipLibCheck
+```
+
+- PASS: command exits with code 0 — no type errors
+- FAIL: any type errors reported → list the errors and do not approve the merge until the task agent fixes them
+
+> This step enforces the `typecheck` quality gate documented in `replit.md`. A merge must never introduce TypeScript errors. If the task agent's branch was forked before the typecheck workflow existed, run the command manually to verify.
+
 ---
 
 ## MERGE PROMPT
 
-After all 6 checks pass, I will present the matrix and say:
+After all checks (Steps 2–6b) pass, I will present the matrix and say:
 
 > **All checks passed. You may now approve the merge for this subtask.**
 
